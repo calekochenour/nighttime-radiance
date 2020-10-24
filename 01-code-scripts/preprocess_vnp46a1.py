@@ -24,10 +24,6 @@
  script runs from a different folder, the paths in the environment setup
  section may have to be changed.
 -------------------------------------------------------------------------------
-Author: Cale Kochenour
-Contact: cale.kochenour@alumni.psu.edu
-Updated: 10/24/2020
--------------------------------------------------------------------------------
 """
 # -------------------------ENVIRONMENT SETUP--------------------------------- #
 import os
@@ -61,18 +57,16 @@ for hdf5 in hdf5_files:
     print(f"Preprocessed file: {processed_files} of {total_files}\n\n")
 
 # -------------------------MAIN FUNCTION------------------------------------- #
-# # Export paths
-# def main():
-#     """Exports projects paths.
-#     """
-#     export_layer_paths(
-#         project_path=input_project_file_path, output_path=output_text_file_path
-#     )
+
+
+def main():
+    pass
 
 
 # -------------------------RUN SCRIPT---------------------------------------- #
 # if __name__ == "__main__":
 #     main()
+
 
 # -------------------------SCRIPT COMPLETION--------------------------------- #
 print("\n")
