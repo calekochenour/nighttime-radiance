@@ -88,6 +88,7 @@ def create_transform_vnp46a1(hdf5):
     Returns
     -------
     transform : affine.Affine object
+        Affine transformation for the georeferenced array.
 
     Example
     -------
@@ -190,6 +191,34 @@ def export_array(array, output_path, metadata):
         output_message = print(f"Exported: {os.path.split(output_path)[-1]}")
 
     return output_message
+
+
+def extract_acquisition_date_vnp46a1(hdf5_path):
+    """Returns the acquisition date of a VNP46A1 HDF5 file.
+
+    Parameters
+    ----------
+    hdf5_path : str
+        Path to a VNP46A1 HDF5 file.
+
+    Returns
+    -------
+    acquisition_date : str
+        Acquisition date of the image, formatted as 'YYYY-MM-DD'.
+
+    Example
+    -------
+        >>> hdf5_file = "VNP46A1.A2020001.h30v05.001.2020004003738.h5"
+        >>> extract_acquisition_date_vnp46a1(hdf5_file)
+        '2020-01-01'
+    """
+    # Open file and extract date
+    with rio.open(hdf5_path) as dataset:
+        acquisition_date = dataset.tags()[
+            "HDFEOS_GRIDS_VNP_Grid_DNB_RangeBeginningDate"
+        ]
+
+    return acquisition_date
 
 
 def extract_band_vnp46a1(hdf5_path, band_name):

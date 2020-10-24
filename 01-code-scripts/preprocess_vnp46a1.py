@@ -10,7 +10,7 @@
    - Creates export metadata; and,
    - Exports radiance data to GeoTiff format.
 
- The script assumes a folder structure as follows:
+ This script uses the following folder structure:
 
    - nighttime-radiance/
      - 01-code-scripts/
@@ -27,12 +27,15 @@
 """
 # -------------------------ENVIRONMENT SETUP--------------------------------- #
 import os
+import warnings
 import glob
 import viirs
 
+# Set options
+warnings.simplefilter("ignore")
+
 # Set working directory to main 'nighttime-radiance/' folder
 os.chdir("..")
-print(f"Working directory: {os.getcwd()}")
 
 # -------------------------USER-DEFINED VARIABLES---------------------------- #
 # Define path folder containing input VNP46A1 HDF5 files
@@ -55,18 +58,6 @@ for hdf5 in hdf5_files:
     )
     processed_files += 1
     print(f"Preprocessed file: {processed_files} of {total_files}\n\n")
-
-# -------------------------MAIN FUNCTION------------------------------------- #
-
-
-def main():
-    pass
-
-
-# -------------------------RUN SCRIPT---------------------------------------- #
-# if __name__ == "__main__":
-#     main()
-
 
 # -------------------------SCRIPT COMPLETION--------------------------------- #
 print("\n")
