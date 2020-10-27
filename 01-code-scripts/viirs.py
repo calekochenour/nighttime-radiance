@@ -2,10 +2,204 @@
 
 import os
 import re
+import datetime as dt
 import numpy as np
 import numpy.ma as ma
+import pandas as pd
 import rasterio as rio
 from rasterio.transform import from_origin
+
+
+def concatenate_preprocessed_vnp46a1(
+    west_geotiff_path, east_geotiff_path, output_folder
+):
+    """Concatenates horizontally-adjacent preprocessed VNP46A1 GeoTiff
+    file and exports the concatenated array to a single GeoTiff.
+
+    Paramaters
+    ----------
+    west_geotiff_path : str
+        Path to the West-most GeoTiff.
+
+    east_geotiff_path : str
+        Path to the East-most GeoTiff.
+
+    output_folder : str
+        Path to the folder where the concatenated file will be
+        exported to.
+
+    Returns
+    -------
+    message : str
+        Indication of concatenation completion status (success
+        or failure).
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Concatenate adjacent VNP46A1 GeoTiff files
+    print(
+        (
+            f"Started concatenating:\n    "
+            f"{os.path.basename(west_geotiff_path)}\n    "
+            f"{os.path.basename(east_geotiff_path)}"
+        )
+    )
+
+    try:
+        print("Concatenating West and East arrays...")
+        # Concatenate West and East images along the 1-axis
+        concatenated = np.concatenate(
+            (
+                read_geotiff_into_array(geotiff_path=west_geotiff_path),
+                read_geotiff_into_array(geotiff_path=east_geotiff_path),
+            ),
+            axis=1,
+        )
+
+        print("Getting bounding box information...")
+        # Get bounding box (left, top, bottom) from west image and
+        #  (right) from east image
+        longitude_min = extract_geotiff_bounding_box(
+            geotiff_path=west_geotiff_path
+        ).left
+        longitude_max = extract_geotiff_bounding_box(
+            geotiff_path=east_geotiff_path
+        ).right
+        latitude_min = extract_geotiff_bounding_box(
+            geotiff_path=west_geotiff_path
+        ).bottom
+        latitude_max = extract_geotiff_bounding_box(
+            geotiff_path=west_geotiff_path
+        ).top
+
+        print("Creating transform...")
+        # Set transform (west bound, north bound, x cell size, y cell size)
+        concatenated_transform = from_origin(
+            longitude_min,
+            latitude_max,
+            (longitude_max - longitude_min) / concatenated.shape[1],
+            (latitude_max - latitude_min) / concatenated.shape[0],
+        )
+
+        print("Creating metadata...")
+        # Create metadata for GeoTiff export
+        metadata = create_metadata(
+            array=concatenated,
+            transform=concatenated_transform,
+            driver="GTiff",
+            nodata=np.nan,
+            count=1,
+            crs="epsg:4326",
+        )
+
+        print("Setting file export name...")
+        # Get name for the exported file
+        export_name = create_concatenated_export_name(
+            west_image_path=west_geotiff_path,
+            east_image_path=east_geotiff_path,
+        )
+
+        print("Exporting to GeoTiff...")
+        # Export concatenated array
+        export_array(
+            array=concatenated,
+            output_path=os.path.join(output_folder, export_name),
+            metadata=metadata,
+        )
+    except Exception as error:
+        message = print(f"Concatenating failed: {error}")
+    else:
+        message = print(
+            (
+                f"Completed concatenating:\n    "
+                f"{os.path.basename(west_geotiff_path)}\n    "
+                f"{os.path.basename(east_geotiff_path)}\n\n"
+            )
+        )
+
+    return message
+
+
+def create_concatenated_export_name(west_image_path, east_image_path):
+    """Creates a file name indicating the concatenation of adjacent two files.
+
+    Paramaters
+    ----------
+    west_image_path : str
+        Path to the West-most image.
+
+    east_image_past : str
+        Path to the East-most image.
+
+    Returns
+    -------
+    export_name : str
+        New file name for export, indicating concatenation.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Extract the horizontal grid numbers from the West and East images
+    west_image_horizontal_grid_number, east_image_horizontal_grid_number = (
+        os.path.basename(west_image_path)[18:20],
+        os.path.basename(east_image_path)[18:20],
+    )
+
+    # Replace the specific date/time with YYYYJJJ and the single horizontal
+    #  grid number with both the West and East numbers
+    export_name = (
+        os.path.basename(west_image_path)
+        .replace(os.path.basename(west_image_path)[35:41], "")
+        .replace(
+            west_image_horizontal_grid_number,
+            west_image_horizontal_grid_number
+            + east_image_horizontal_grid_number,
+        )
+    )
+
+    return export_name
+
+
+def create_date_range(start_date, end_date):
+    """Creates a list of dates between a specified start and end date.
+
+    Parameters
+    ----------
+    start_date : str
+        Start date, formatted as 'YYYY-MM-DD'.
+
+    end_date : str
+        Start date, formatted as 'YYYY-MM-DD'.
+
+    Returns
+    -------
+    date_range : list (of str)
+        List of dates between and including the start and end dates,
+        with each date formatted as 'YYYYMMDD'.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Get list of dates
+    dates = [
+        dt.datetime.strftime(date, "%Y%m%d")
+        for date in pd.date_range(start=start_date, end=end_date)
+    ]
+
+    return dates
 
 
 def create_metadata(
@@ -322,6 +516,61 @@ def extract_band_vnp46a1(hdf5_path, band_name):
     return band
 
 
+def extract_date_vnp46a1(geotiff_path):
+    """Extracts the file date from a preprocessed VNP46A1 GeoTiff.
+
+    Parameters
+    ----------
+    geotiff_path : str
+        Path to the GeoTiff file.
+
+    Returns
+    -------
+    date : str
+        Acquisition date of the preprocessed VNP46A1 GeoTiff.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Get date (convert YYYYJJJ to YYYYMMDD)
+    date = dt.datetime.strptime(
+        os.path.basename(geotiff_path)[9:16], "%Y%j"
+    ).strftime("%Y%m%d")
+
+    return date
+
+
+def extract_geotiff_bounding_box(geotiff_path):
+    """Extracts the bounding box from a GeoTiff file.
+
+    Parameters
+    ----------
+    geotiff_path : str
+        Path to the GeoTiff file.
+
+    Returns
+    -------
+    bounding_box : rasterio.coords.BoundingBox
+        Bounding box for the GeoTiff
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Extract bounding box
+    with rio.open(geotiff_path) as src:
+        bounding_box = src.bounds
+
+    return bounding_box
+
+
 def extract_qa_bits(qa_band, start_bit, end_bit):
     """Extracts the QA bitmask values for a specified bitmask (starting
      and ending bit).
@@ -480,3 +729,33 @@ def preprocess_vnp46a1(hdf5_path, output_folder):
         )
 
     return message
+
+
+def read_geotiff_into_array(geotiff_path, dimensions=1):
+    """Reads a GeoTif file into a NumPy array.
+
+    Parameters
+    ----------
+    geotiff_path : str
+        Path to the GeoTiff file.
+
+    dimensions : int, optional
+        Number of bands to read in. Default value is 1.
+
+    Returns
+    -------
+    array : numpy array
+        Array containing the data.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Read-in array
+    with rio.open(geotiff_path) as src:
+        array = src.read(dimensions)
+
+    return array
