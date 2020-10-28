@@ -44,12 +44,17 @@ geotiff_output_folder = os.path.join(
     "03-processed-data", "raster", "south-korea", "vnp46a1-grid-concatenated"
 )
 
+# Set start date and end date for processing
+start_date, end_date = "2020-01-01", "2020-04-09"
+
 # -------------------------DATA PREPROCESSING-------------------------------- #
 # Concatenate and export adjacent images that have the same acquisition date
-dates = viirs.create_date_range(start_date="2020-01-01", end_date="2020-01-05")
+dates = viirs.create_date_range(start_date=start_date, end_date=end_date)
 geotiff_files = glob.glob(os.path.join(geotiff_input_folder, "*.tif"))
-concatenated_files = 0
-total_files = len(geotiff_files)
+concatenated_dates = 0
+skipped_dates = 0
+processed_dates = 0
+total_dates = len(dates)
 for date in dates:
     adjacent_images = []
     for file in geotiff_files:
@@ -62,11 +67,15 @@ for date in dates:
             east_geotiff_path=adjacent_images_sorted[1],
             output_folder=geotiff_output_folder,
         )
-        concatenated_files += 2
+        concatenated_dates += 1
     else:
-        print(f"No adjacent files for {date}")
-        concatenated_files += 1
-    print(f"Concatenated files: {concatenated_files} of {total_files}\n\n")
+        skipped_dates += 1
+    processed_dates += 1
+    print(f"Processed dates: {processed_dates} of {total_dates}\n\n")
+
+print(
+    f"Concatenated dates: {concatenated_dates}, Skipped dates: {skipped_dates}"
+)
 
 # -------------------------SCRIPT COMPLETION--------------------------------- #
 print("\n")
