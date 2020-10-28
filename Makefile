@@ -2,7 +2,7 @@
 .PHONY: all download preprocess concatenate clip clean
 
 # Download, preprocess, concatenate, and clip
-all: preprocess concatenate clip
+all: download preprocess concatenate clip
 
 # Download a LAADS order
 download: 01-code-scripts/download_laads_order.py
