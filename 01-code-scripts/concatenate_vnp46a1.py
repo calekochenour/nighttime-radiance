@@ -47,9 +47,12 @@ geotiff_output_folder = os.path.join(
 # -------------------------DATA PREPROCESSING-------------------------------- #
 # Concatenate and export adjacent images that have the same acquisition date
 dates = viirs.create_date_range(start_date="2020-01-01", end_date="2020-01-05")
+geotiff_files = glob.glob(os.path.join(geotiff_input_folder, "*.tif"))
+concatenated_files = 0
+total_files = len(geotiff_files)
 for date in dates:
     adjacent_images = []
-    for file in glob.glob(os.path.join(geotiff_input_folder, "*.tif")):
+    for file in geotiff_files:
         if date in viirs.extract_date_vnp46a1(geotiff_path=file):
             adjacent_images.append(file)
     adjacent_images_sorted = sorted(adjacent_images)
@@ -59,6 +62,11 @@ for date in dates:
             east_geotiff_path=adjacent_images_sorted[1],
             output_folder=geotiff_output_folder,
         )
+        concatenated_files += 2
+    else:
+        print(f"No adjacent files for {date}")
+        concatenated_files += 1
+    print(f"Concatenated files: {concatenated_files} of {total_files}\n\n")
 
 # -------------------------SCRIPT COMPLETION--------------------------------- #
 print("\n")

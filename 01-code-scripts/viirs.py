@@ -8,6 +8,78 @@ import numpy.ma as ma
 import pandas as pd
 import rasterio as rio
 from rasterio.transform import from_origin
+import earthpy.spatial as es
+
+
+def clip_vnp46a1(geotiff_path, clip_boundary, clip_country, output_folder):
+    """Clips an image to a bounding box and exports the clipped image to
+    a GeoTiff file.
+
+    Paramaters
+    ----------
+    geotiff_path : str
+        Path to the GeoTiff image to be clipped.
+
+    clip_boundary : geopandas geodataframe
+        Geodataframe for containing the boundary used for clipping.
+
+    clip_country : str
+        Name of the country the data is being clipped to. The country
+        name is used in the name of the exported file. E.g. 'South Korea'.
+        Spaces and capital letters are acceptable and handled within the
+        function.
+
+    output_folder : str
+        Path to the folder where the clipped file will be exported to.
+
+    Returns
+    -------
+    message : str
+        Indication of concatenation completion status (success
+        or failure).
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Clip VNP46A1 file
+    print(
+        f"Started clipping: Clip {os.path.basename(geotiff_path)} "
+        f"to {clip_country} boundary"
+    )
+    try:
+        print("Clipping image...")
+        # Clip image (return clipped array and new metadata)
+        with rio.open(geotiff_path) as src:
+            cropped_image, cropped_metadata = es.crop_image(
+                raster=src, geoms=clip_boundary
+            )
+
+        print("Setting export name...")
+        # Set export name
+        export_name = create_clipped_export_name(
+            image_path=geotiff_path, country_name=clip_country
+        )
+
+        print("Exporting to GeoTiff...")
+        # Export file
+        export_array(
+            array=cropped_image[0],
+            output_path=os.path.join(output_folder, export_name),
+            metadata=cropped_metadata,
+        )
+    except Exception as error:
+        message = print(f"Clipping failed: {error}\n")
+    else:
+        message = print(
+            f"Completed clipping: Clip {os.path.basename(geotiff_path)} "
+            f"to {clip_country} boundary\n"
+        )
+
+    return message
 
 
 def concatenate_preprocessed_vnp46a1(
@@ -112,17 +184,46 @@ def concatenate_preprocessed_vnp46a1(
             metadata=metadata,
         )
     except Exception as error:
-        message = print(f"Concatenating failed: {error}")
+        message = print(f"Concatenating failed: {error}\n")
     else:
         message = print(
             (
                 f"Completed concatenating:\n    "
                 f"{os.path.basename(west_geotiff_path)}\n    "
-                f"{os.path.basename(east_geotiff_path)}\n\n"
+                f"{os.path.basename(east_geotiff_path)}\n"
             )
         )
 
     return message
+
+
+def create_clipped_export_name(image_path, country_name):
+    """Creates a file name indicating a clipped file.
+
+    Paramaters
+    ----------
+    image_path : str
+        Path to the original (unclipped image).
+
+    Returns
+    -------
+    export_name : str
+        New file name for export, indicating clipping.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Set export name
+    image_source = os.path.basename(image_path)[:7]
+    image_date = extract_date_vnp46a1(image_path)
+    image_country = country_name.replace(" ", "-").lower()
+    export_name = f"{image_source}-{image_date}-clipped-{image_country}.tif"
+
+    return export_name
 
 
 def create_concatenated_export_name(west_image_path, east_image_path):
@@ -722,7 +823,7 @@ def preprocess_vnp46a1(hdf5_path, output_folder):
             metadata=metadata,
         )
     except Exception as error:
-        message = print(f"Preprocessing failed: {error}")
+        message = print(f"Preprocessing failed: {error}\n")
     else:
         message = print(
             f"Completed preprocessing: {os.path.basename(hdf5_path)}\n"
