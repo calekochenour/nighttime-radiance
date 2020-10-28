@@ -49,14 +49,15 @@
      - 03-processed-data/
      - 04-graphics-outputs/
      - 05-papers-writings/
+
+ Running the script from the 'nighttime-radiance/' folder works by default. If
+ the script runs from a different folder, the paths in the environment setup
+ section may have to be changed.
 -------------------------------------------------------------------------------
 """
 # -------------------------ENVIRONMENT SETUP--------------------------------- #
 # Import packages
 import os
-
-# Set working directory
-os.chdir("..")
 
 # -------------------------USER-DEFINED VARIABLES---------------------------- #
 # Set LAADS token (specific to user account)
@@ -67,7 +68,7 @@ order_id_file_path = os.path.join("05-papers-writings", "laads-order.txt")
 
 # Set location for data downloaded (for test and real data)
 test_directory = "05-papers-writings"
-data_directory = os.path.join("02-raw-data", "raster", "south-korea")
+data_directory = os.path.join("02-raw-data", "hdf", "south-korea")
 
 # Test the script by downloading LAADS README
 #  Set True for README download, False for LAADS data order download

@@ -15,8 +15,8 @@
      - 04-graphics-outputs/
      - 05-papers-writings/
 
- Running the script from the '01-code-scripts/' folder works by default. If the
- script runs from a different folder, the paths in the environment setup
+ Running the script from the 'nighttime-radiance/' folder works by default. If
+ the script runs from a different folder, the paths in the environment setup
  section may have to be changed.
 -------------------------------------------------------------------------------
 """
@@ -30,9 +30,6 @@ import viirs
 # Set options
 warnings.simplefilter("ignore")
 
-# Set working directory
-os.chdir("..")
-
 # -------------------------USER-DEFINED VARIABLES---------------------------- #
 # Define path to folder containing preprocessed VNP46A1 GeoTiff files
 geotiff_input_folder = os.path.join(
@@ -45,7 +42,7 @@ geotiff_output_folder = os.path.join(
 )
 
 # Set start date and end date for processing
-start_date, end_date = "2020-01-01", "2020-04-09"
+start_date, end_date = "2020-04-20", "2020-04-29"
 
 # -------------------------DATA PREPROCESSING-------------------------------- #
 # Concatenate and export adjacent images that have the same acquisition date

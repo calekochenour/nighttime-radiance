@@ -13,8 +13,8 @@
      - 04-graphics-outputs/
      - 05-papers-writings/
 
- Running the script from the '01-code-scripts/' folder works by default. If the
- script runs from a different folder, the paths in the environment setup
+ Running the script from the 'nighttime-radiance/' folder works by default. If
+ the script runs from a different folder, the paths in the environment setup
  section may have to be changed.
 -------------------------------------------------------------------------------
 """
@@ -28,9 +28,6 @@ import viirs
 
 # Set options
 warnings.simplefilter("ignore")
-
-# Set working directory
-os.chdir("..")
 
 # -------------------------USER-DEFINED VARIABLES---------------------------- #
 # Set path to folder containing concateanted preprocessed VNP46A1 files
