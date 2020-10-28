@@ -1,0 +1,21 @@
+name: nighttime-radiance
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Main Python
+  - python=3.7.6
+  # Scientific computing
+  - numpy
+  - pandas
+  # Spatial packages
+  - geopandas
+  - rasterio
+  - earthpy
+  # Jupyter environment
+  - jupyterlab
+  - notebook
+  - jupyter_contrib_nbextensions
+  - nbclean
+  - autopep8
+  - nb_black
