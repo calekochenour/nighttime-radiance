@@ -12,13 +12,20 @@
 
  This script uses the following folder structure:
 
-   - nighttime-radiance/
-     - 01-code-scripts/
-       - preprocess_vnp46a1.py
-     - 02-raw-data/
-     - 03-processed-data/
-     - 04-graphics-outputs/
-     - 05-papers-writings/
+   ├── 01-code-scripts
+   │   ├── clip_vnp46a1.ipynb
+   │   ├── clip_vnp46a1.py
+   │   ├── concatenate_vnp46a1.ipynb
+   │   ├── concatenate_vnp46a1.py
+   │   ├── download_laads_order.ipynb
+   │   ├── download_laads_order.py
+   │   ├── preprocess_vnp46a1.ipynb
+   │   ├── preprocess_vnp46a1.py
+   │   └── viirs.py
+   ├── 02-raw-data
+   ├── 03-processed-data
+   ├── 04-graphics-outputs
+   └── 05-papers-writings
 
  Running the script from the 'nighttime-radiance/' folder works by default. If
  the script runs from a different folder, the paths in the environment setup
