@@ -55,6 +55,9 @@
 # Import packages
 import os
 
+# Set working directory
+os.chdir("..")
+
 # -------------------------USER-DEFINED VARIABLES---------------------------- #
 # Set LAADS token (specific to user account)
 token = os.environ.get("LAADS_TOKEN")
