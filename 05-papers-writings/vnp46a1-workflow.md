@@ -26,7 +26,7 @@ $ make preprocess
 
 ## Concatenate Data (Optional)
 
-Concatenating data is necessary when the study area crossed into multiple VNP46A1 images. The workflow handles concatenating horizontally-adjacent images at this time. This step requires preprocessed GeoTiff files. Once files are preprocessed into GeoTiffs and you have changed the variables (as necessary) in the user-defined variables section of the `01-code-scripts/concatenate_vnp46a1.py` file, run the following command:
+Concatenating data is necessary when the study area crosses into multiple VNP46A1 images. The workflow handles concatenating horizontally-adjacent images at this time. This step requires preprocessed GeoTiff files. Once files are preprocessed into GeoTiffs and you have changed the variables (as necessary) in the user-defined variables section of the `01-code-scripts/concatenate_vnp46a1.py` file, run the following command:
 
 ```bash
 $ make concatenate
@@ -48,4 +48,4 @@ To run the full workflow in succession (download, preprocess, concatenate, clip)
 $ make all
 ```
 
-Note that this command includes the data concatenation. The `Makefile` contents will have to be changed if the concatenation script is not required for the study area.
+Note that this command includes data concatenation. The `Makefile` contents will have to be changed if the concatenation script is not required for the study area.
