@@ -25,6 +25,10 @@ Contains all figures and plots.
 
 Contains all written content.
 
+### `Makefile`
+
+Contains instructions to run the Python scripts in the `01-code-scripts` folder.
+
 ### `environment.yml`
 
 Contains all information to create the Conda environment required to run the Python and Jupyter Notebook files in the `01-code-scripts/` folder.  
