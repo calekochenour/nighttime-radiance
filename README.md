@@ -27,7 +27,7 @@ Contains all written content.
 
 ### `Makefile`
 
-Contains instructions to run the Python scripts in the `01-code-scripts` folder.
+Contains instructions to run the Python scripts in the `01-code-scripts/` folder.
 
 ### `environment.yml`
 
