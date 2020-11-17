@@ -3,12 +3,65 @@
 import os
 import re
 import datetime as dt
+import matplotlib.pyplot as plt
+from matplotlib import colors
 import numpy as np
 import numpy.ma as ma
 import pandas as pd
 import rasterio as rio
 from rasterio.transform import from_origin
+import earthpy.plot as ep
 import earthpy.spatial as es
+
+
+def calculate_statistic(data, statistic="mean"):
+    """Calculates the specified statistic over input arrays covering
+    the same geographic area.
+
+    Parameters
+    ----------
+    data : list of numpy arrays
+        List of arrays containing the data. Individual arrays can
+        contain NaN values.
+
+    statistic : str (optional)
+        Statistic to be calculated over the arrays in the
+        list. Default value is 'mean'. Function supports
+        'mean', 'variance', 'deviation', and 'median'.
+
+    Returns
+    -------
+    data_statistic : numpy array
+        Array containing the statistic value for each pixel, computed
+        over the number of arrays in the input list.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Raise errors
+    if not isinstance(data, list):
+        raise TypeError("Input data must be of type list.")
+
+    # Calculate statistic (mean, variance, standard deviation, or median)
+    if statistic == "mean":
+        data_statistic = np.nanmean(np.stack(data), axis=0)
+    elif statistic == "variance":
+        data_statistic = np.nanvar(np.stack(data), axis=0)
+    elif statistic == "deviation":
+        data_statistic = np.nanstd(np.stack(data), axis=0)
+    elif statistic == "median":
+        data_statistic = np.nanmedian(np.stack(data), axis=0)
+    else:
+        raise ValueError(
+            "Invalid statistic. Function supports "
+            "'mean', 'variance', 'deviation', or 'median'."
+        )
+
+    return data_statistic
 
 
 def clip_vnp46a1(geotiff_path, clip_boundary, clip_country, output_folder):
@@ -672,6 +725,33 @@ def extract_geotiff_bounding_box(geotiff_path):
     return bounding_box
 
 
+def extract_geotiff_metadata(geotiff_path):
+    """Extract metadata from a GeoTiff file.
+
+    Parameters
+    ----------
+    geotiff_path : str
+        Path to the GeoTiff file.
+
+    Returns
+    -------
+    metadata : dict
+        Dictionary containing the metadata.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Read-in array
+    with rio.open(geotiff_path) as src:
+        metadata = src.meta
+
+    return metadata
+
+
 def extract_qa_bits(qa_band, start_bit, end_bit):
     """Extracts the QA bitmask values for a specified bitmask (starting
      and ending bit).
@@ -717,6 +797,356 @@ def extract_qa_bits(qa_band, start_bit, end_bit):
     qa_values = qa_flags_set >> start_bit
 
     return qa_values
+
+
+def plot_quality_flag_bitmask(bitmask_array, bitmask_name, axis):
+    """Plots the discrete bitmask values for an image.
+
+    Parameters
+    ----------
+    bitmask_array : numpy array
+        Array containing the base-10 bitmask values.
+
+    bitmask_name : str
+        Name of the bitmask layer. Valid names: 'Day/Night', 'Land/Water
+        Background', 'Cloud Mask Quality', 'Cloud Detection',
+        'Shadow Detected', 'Cirrus Detection', 'Snow/Ice Surface', and
+        'QF DNB'.
+
+    Returns
+    -------
+    tuple
+
+        fig : matplotlib.figure.Figure object
+            The figure object associated with the histogram.
+
+        ax : matplotlib.axes._subplots.AxesSubplot objects
+            The axes objects associated with the histogram.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Store possible bitmask values and titles (for plotting)
+    vnp46a1_bitmasks = {
+        "Day/Night": {"values": [0, 1], "labels": ["Night", "Day"]},
+        "Land/Water Background": {
+            "values": [0, 1, 2, 3, 5],
+            "labels": [
+                "Land & Desert",
+                "Land no Desert",
+                "Inland Water",
+                "Sea Water",
+                "Coastal",
+            ],
+        },
+        "Cloud Mask Quality": {
+            "values": [0, 1, 2, 3],
+            "labels": ["Poor", "Low", "Medium", "High"],
+        },
+        "Cloud Detection": {
+            "values": [0, 1, 2, 3],
+            "labels": [
+                "Confident Clear",
+                "Probably Clear",
+                "Probably Cloudy",
+                "Confident Cloudy",
+            ],
+        },
+        "Shadow Detected": {
+            "values": [0, 1],
+            "labels": ["No Shadow", "Shadow"],
+        },
+        "Cirrus Detection": {
+            "values": [0, 1],
+            "labels": ["No Cirrus Cloud", "Cirrus Cloud"],
+        },
+        "Snow/Ice Surface": {
+            "values": [0, 1],
+            "labels": ["No Snow/Ice", "Snow/Ice"],
+        },
+        "QF DNB": {
+            "values": [0, 1, 2, 4, 8, 16, 256, 512, 1024, 2048],
+            "labels": [
+                "No Sensor Problems",
+                "Substitute Calibration",
+                "Out of Range",
+                "Saturation",
+                "Temperature not Nominal",
+                "Stray Light",
+                "Bowtie Deleted / Range Bit",
+                "Missing EV",
+                "Calibration Fail",
+                "Dead Detector",
+            ],
+        },
+    }
+
+    # Raise errors
+    if bitmask_name not in vnp46a1_bitmasks.keys():
+        raise ValueError(
+            f"Invalid name. Valid names are: {list(vnp46a1_bitmasks.keys())}"
+        )
+
+    # Get values and labels for bitmask
+    bitmask_values = vnp46a1_bitmasks.get(bitmask_name).get("values")
+    bitmask_labels = vnp46a1_bitmasks.get(bitmask_name).get("labels")
+
+    # Create colormap with the number of values in the bitmask
+    cmap = plt.cm.get_cmap("tab20b", len(bitmask_values))
+
+    # Add start bin of 0 to list of bitmask values
+    bins = [0] + bitmask_values
+
+    # Normalize colormap to discrete intervals
+    bounds = [((a + b) / 2) for a, b in zip(bins[:-1], bins[1::1])] + [
+        2 * (bins[-1]) - bins[-2]
+    ]
+    norm = colors.BoundaryNorm(bounds, cmap.N)
+
+    # Plot bitmask on axis
+    bitmask = axis.imshow(bitmask_array, cmap=cmap, norm=norm)
+    ep.draw_legend(
+        im_ax=bitmask,
+        classes=bitmask_values,
+        cmap=cmap,
+        titles=bitmask_labels,
+    )
+    axis.set_title(f"{bitmask_name}", size=16)
+    axis.set_axis_off()
+
+    return axis
+
+
+def plot_quality_flag_bitmask_single_band(bitmask_array, bitmask_name):
+    """Plots the discrete bitmask values for an image.
+
+    Parameters
+    ----------
+    bitmask_array : numpy array
+        Array containing the base-10 bitmask values.
+
+    bitmask_name : str
+        Name of the bitmask layer. Valid names: 'Day/Night', 'Land/Water
+        Background', 'Cloud Mask Quality', 'Cloud Detection',
+        'Shadow Detected', 'Cirrus Detection', 'Snow/Ice Surface', and
+        'QF DNB'.
+
+    Returns
+    -------
+    tuple
+
+        fig : matplotlib.figure.Figure object
+            The figure object associated with the histogram.
+
+        ax : matplotlib.axes._subplots.AxesSubplot objects
+            The axes objects associated with the histogram.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Store possible bitmask values and titles (for plotting)
+    vnp46a1_bitmasks = {
+        "Day/Night": {"values": [0, 1], "labels": ["Night", "Day"]},
+        "Land/Water Background": {
+            "values": [0, 1, 2, 3, 5],
+            "labels": [
+                "Land & Desert",
+                "Land no Desert",
+                "Inland Water",
+                "Sea Water",
+                "Coastal",
+            ],
+        },
+        "Cloud Mask Quality": {
+            "values": [0, 1, 2, 3],
+            "labels": ["Poor", "Low", "Medium", "High"],
+        },
+        "Cloud Detection": {
+            "values": [0, 1, 2, 3],
+            "labels": [
+                "Confident Clear",
+                "Probably Clear",
+                "Probably Cloudy",
+                "Confident Cloudy",
+            ],
+        },
+        "Shadow Detected": {
+            "values": [0, 1],
+            "labels": ["No Shadow", "Shadow"],
+        },
+        "Cirrus Detection": {
+            "values": [0, 1],
+            "labels": ["No Cirrus Cloud", "Cirrus Cloud"],
+        },
+        "Snow/Ice Surface": {
+            "values": [0, 1],
+            "labels": ["No Snow/Ice", "Snow/Ice"],
+        },
+        "QF DNB": {
+            "values": [0, 1, 2, 4, 8, 16, 256, 512, 1024, 2048],
+            "labels": [
+                "No Sensor Problems",
+                "Substitute Calibration",
+                "Out of Range",
+                "Saturation",
+                "Temperature not Nominal",
+                "Stray Light",
+                "Bowtie Deleted / Range Bit",
+                "Missing EV",
+                "Calibration Fail",
+                "Dead Detector",
+            ],
+        },
+    }
+
+    # Raise errors
+    if bitmask_name not in vnp46a1_bitmasks.keys():
+        raise ValueError(
+            f"Invalid name. Valid names are: {list(vnp46a1_bitmasks.keys())}"
+        )
+
+    # Get values and labels for bitmask
+    bitmask_values = vnp46a1_bitmasks.get(bitmask_name).get("values")
+    bitmask_labels = vnp46a1_bitmasks.get(bitmask_name).get("labels")
+
+    # Create colormap with the number of values in the bitmask
+    cmap = plt.cm.get_cmap("tab20b", len(bitmask_values))
+
+    # Add start bin of 0 to list of bitmask values
+    bins = [0] + bitmask_values
+
+    # Normalize colormap to discrete intervals
+    bounds = [((a + b) / 2) for a, b in zip(bins[:-1], bins[1::1])] + [
+        2 * (bins[-1]) - bins[-2]
+    ]
+    norm = colors.BoundaryNorm(bounds, cmap.N)
+
+    # Plot bitmask
+    with plt.style.context("dark_background"):
+        fig, ax = plt.subplots(figsize=(12, 8))
+        bitmask = ax.imshow(bitmask_array, cmap=cmap, norm=norm)
+        ep.draw_legend(
+            im_ax=bitmask,
+            classes=bitmask_values,
+            cmap=cmap,
+            titles=bitmask_labels,
+        )
+        ax.set_title(f"{bitmask_name} Bitmask", size=20)
+        ax.set_axis_off()
+
+    return fig, ax
+
+
+def plot_quality_flags_vnp46a1(vnp46a1_quality_stack, data_source="NASA"):
+    """Plots all VIIRS VNP46A1 DNB QF Cloud Mask bitmasks and the
+    QF DNB bitmask.
+
+    Parameters
+    ----------
+    vnp46a1_quality_stack : numpy array
+        3D array containing the quality flag bitmask layers.
+
+    data_source : str, optional
+        Location of the data. Default value is 'NASA'.
+
+    Returns
+    -------
+    tuple
+
+        fig : matplotlib.figure.Figure object
+            The figure object associated with the histogram.
+
+        ax : matplotlib.axes._subplots.AxesSubplot objects
+            The axes objects associated with the histogram.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Configure plot
+    with plt.style.context("dark_background"):
+        fig, ax = plt.subplots(nrows=4, ncols=2, figsize=(15, 20))
+        plt.suptitle("VNP46A1 Quality Flag Bitmasks", size=20)
+        plt.subplots_adjust(top=0.935)
+
+        # Plot bitmasks
+        # Day/night
+        plot_quality_flag_bitmask(
+            bitmask_array=vnp46a1_quality_stack[0],
+            bitmask_name="Day/Night",
+            axis=ax[0][0],
+        )
+
+        # Land/water background
+        plot_quality_flag_bitmask(
+            bitmask_array=vnp46a1_quality_stack[1],
+            bitmask_name="Land/Water Background",
+            axis=ax[0][1],
+        )
+
+        # Cloud mask quality
+        plot_quality_flag_bitmask(
+            bitmask_array=vnp46a1_quality_stack[2],
+            bitmask_name="Cloud Mask Quality",
+            axis=ax[1][0],
+        )
+
+        # Cloud detection
+        plot_quality_flag_bitmask(
+            bitmask_array=vnp46a1_quality_stack[3],
+            bitmask_name="Cloud Detection",
+            axis=ax[1][1],
+        )
+
+        # Shadow detected
+        plot_quality_flag_bitmask(
+            bitmask_array=vnp46a1_quality_stack[4],
+            bitmask_name="Shadow Detected",
+            axis=ax[2][0],
+        )
+
+        # Cirrus detection
+        plot_quality_flag_bitmask(
+            bitmask_array=vnp46a1_quality_stack[5],
+            bitmask_name="Cirrus Detection",
+            axis=ax[2][1],
+        )
+
+        # Snow/ice surface
+        plot_quality_flag_bitmask(
+            bitmask_array=vnp46a1_quality_stack[6],
+            bitmask_name="Snow/Ice Surface",
+            axis=ax[3][0],
+        )
+
+        # QF DNB
+        plot_quality_flag_bitmask(
+            bitmask_array=vnp46a1_quality_stack[7],
+            bitmask_name="QF DNB",
+            axis=ax[3][1],
+        )
+
+        # Add caption
+        fig.text(
+            0.5,
+            0.1,
+            f"Data Source: {data_source}",
+            ha="center",
+            fontsize=12,
+        )
+
+    return fig, ax
 
 
 def preprocess_vnp46a1(hdf5_path, output_folder):
@@ -833,7 +1263,7 @@ def preprocess_vnp46a1(hdf5_path, output_folder):
 
 
 def read_geotiff_into_array(geotiff_path, dimensions=1):
-    """Reads a GeoTif file into a NumPy array.
+    """Reads a GeoTiff file into a NumPy array.
 
     Parameters
     ----------
@@ -860,3 +1290,56 @@ def read_geotiff_into_array(geotiff_path, dimensions=1):
         array = src.read(dimensions)
 
     return array
+
+
+def stack_quality_flags_vnp46a1(vnp46a1_path):
+    """Creates a stacked (3D) NumPy array containing all of the VNP46A1
+    quality flag bitmask layers.
+
+    Parameters
+    ----------
+    vnp46a1_path : str
+        Path to the VNP46A1 HDF5 (.h5) file.
+
+    Returns
+    -------
+    quality_flag_stack : numpy array
+        3D array containing the quality flag bitmask layers.
+
+    Example
+    -------
+        >>>
+        >>>
+        >>>
+        >>>
+    """
+    # Extract QF CLoud Mask and QF DNB bands
+    qf_cloud_mask = extract_band_vnp46a1(
+        hdf5_path=vnp46a1_path, band_name="QF_Cloud_Mask"
+    )
+    qf_dnb = extract_band_vnp46a1(hdf5_path=vnp46a1_path, band_name="QF_DNB")
+
+    # Extract QF Cloud Mask bitmasks
+    day_night = extract_qa_bits(qf_cloud_mask, 0, 0)
+    land_water_background = extract_qa_bits(qf_cloud_mask, 1, 3)
+    cloud_mask_quality = extract_qa_bits(qf_cloud_mask, 4, 5)
+    cloud_detection = extract_qa_bits(qf_cloud_mask, 6, 7)
+    shadow_detected = extract_qa_bits(qf_cloud_mask, 8, 8)
+    cirrus_detection = extract_qa_bits(qf_cloud_mask, 9, 9)
+    snow_ice_surface = extract_qa_bits(qf_cloud_mask, 10, 10)
+
+    # Create stack
+    quality_flag_stack = np.stack(
+        arrays=[
+            day_night,
+            land_water_background,
+            cloud_mask_quality,
+            cloud_detection,
+            shadow_detected,
+            cirrus_detection,
+            snow_ice_surface,
+            qf_dnb,
+        ]
+    )
+
+    return quality_flag_stack
