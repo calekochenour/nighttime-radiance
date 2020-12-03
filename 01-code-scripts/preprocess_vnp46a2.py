@@ -30,7 +30,7 @@
    └── 05-papers-writings
 
  Running this script from the `01-code-scripts/` folder works by default. If
- the Notebook runs from a different folder, the paths in the environment setup
+ the script runs from a different folder, the paths in the environment setup
  section may have to be changed.
 -------------------------------------------------------------------------------
 """
