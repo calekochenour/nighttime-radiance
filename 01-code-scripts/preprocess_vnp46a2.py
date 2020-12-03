@@ -3,31 +3,31 @@
  Preprocesses NASA VNP46A2 HDF5 files. This Notebook takes raw `.h5` files
  and completes the following preprocessing tasks:
 
- - Extracts radiance and quality flag bands;
- - Masks radiance for fill values, clouds, and sea water;
- - Fills masked data with NaN values;
- - Creates a georeferencing transform;
- - Creates export metadata; and,
- - Exports radiance data to GeoTiff format.
+   - Extracts radiance and quality flag bands;
+   - Masks radiance for fill values, clouds, and sea water;
+   - Fills masked data with NaN values;
+   - Creates a georeferencing transform;
+   - Creates export metadata; and,
+   - Exports radiance data to GeoTiff format.
 
  This script uses the following folder structure:
 
- ├── 01-code-scripts
- │   ├── clip_vnp46a1.ipynb
- │   ├── clip_vnp46a1.py
- │   ├── concatenate_vnp46a1.ipynb
- │   ├── concatenate_vnp46a1.py
- │   ├── download_laads_order.ipynb
- │   ├── download_laads_order.py
- │   ├── preprocess_vnp46a1.ipynb
- │   ├── preprocess_vnp46a1.py
- │   ├── preprocess_vnp46a2.ipynb
- │   ├── preprocess_vnp46a2.py
- │   └── viirs.py
- ├── 02-raw-data
- ├── 03-processed-data
- ├── 04-graphics-outputs
- └── 05-papers-writings
+   ├── 01-code-scripts
+   │   ├── clip_vnp46a1.ipynb
+   │   ├── clip_vnp46a1.py
+   │   ├── concatenate_vnp46a1.ipynb
+   │   ├── concatenate_vnp46a1.py
+   │   ├── download_laads_order.ipynb
+   │   ├── download_laads_order.py
+   │   ├── preprocess_vnp46a1.ipynb
+   │   ├── preprocess_vnp46a1.py
+   │   ├── preprocess_vnp46a2.ipynb
+   │   ├── preprocess_vnp46a2.py
+   │   └── viirs.py
+   ├── 02-raw-data
+   ├── 03-processed-data
+   ├── 04-graphics-outputs
+   └── 05-papers-writings
 
  Running the Notebook from the `01-code-scripts/` folder works by default. If
  the Notebook runs from a different folder, the paths in the environment setup
